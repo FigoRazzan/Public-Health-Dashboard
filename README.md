@@ -50,13 +50,42 @@ Proyek ini dikembangkan sebagai bagian dari mata kuliah **FB-499 INFORMATIKA TER
 
 Proyek ini dikembangkan oleh mahasiswa Informatika ITENAS:
 
-| NRP | Nama | Role |
-|-----|------|------|
-| 15-2022-044 | Dimas Bratakusumah | Project Lead / Health Informatics Analyst & Ethics & Governance Representative |
-| 15-2022-064 | Muhammad Figo Razzan Fadillah | Application Developer / Data Engineer |
-| 15-2022-150 | Dian Raisa Gumilar | Data Analyst / Visualization Specialist |
-| 15-2022-217 | Mochamad Ramdhan | System Architect / Developer |
-| 15-2022-250 | R Jayani Maulana S | Public Health Data Specialist |
+<table>
+<thead>
+<tr>
+<th>NRP</th>
+<th>Nama</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>15-2022-044</td>
+<td>Dimas Bratakusumah</td>
+<td>Project Lead / Health Informatics Analyst & Ethics & Governance Representative</td>
+</tr>
+<tr>
+<td>15-2022-064</td>
+<td>Muhammad Figo Razzan Fadillah</td>
+<td>Application Developer / Data Engineer</td>
+</tr>
+<tr>
+<td>15-2022-150</td>
+<td>Dian Raisa Gumilar</td>
+<td>Data Analyst / Visualization Specialist</td>
+</tr>
+<tr>
+<td>15-2022-217</td>
+<td>Mochamad Ramdhan</td>
+<td>System Architect / Developer</td>
+</tr>
+<tr>
+<td>15-2022-250</td>
+<td>R Jayani Maulana S</td>
+<td>Public Health Data Specialist</td>
+</tr>
+</tbody>
+</table>
 
 **Mata Kuliah:** FB-499 INFORMATIKA TERAPAN BB  
 **Institusi:** Institut Teknologi Nasional (ITENAS) Bandung  
