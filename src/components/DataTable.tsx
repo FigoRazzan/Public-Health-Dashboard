@@ -11,60 +11,22 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const tableData = [
-  {
-    date_reported: "2020-01-04",
-    country_code: "AF",
-    country: "Afghanistan",
-    who_region: "EMR",
-    new_cases: 0,
-    cumulative_cases: 0,
-    new_deaths: 0,
-    cumulative_deaths: 0,
-  },
-  {
-    date_reported: "2020-01-04",
-    country_code: "DZ",
-    country: "Algeria",
-    who_region: "AFR",
-    new_cases: 0,
-    cumulative_cases: 0,
-    new_deaths: 0,
-    cumulative_deaths: 0,
-  },
-  {
-    date_reported: "2020-01-04",
-    country_code: "AL",
-    country: "Albania",
-    who_region: "EUR",
-    new_cases: 0,
-    cumulative_cases: 0,
-    new_deaths: 0,
-    cumulative_deaths: 0,
-  },
-  {
-    date_reported: "2020-01-04",
-    country_code: "AI",
-    country: "Anguilla",
-    who_region: "AMR",
-    new_cases: 0,
-    cumulative_cases: 0,
-    new_deaths: 0,
-    cumulative_deaths: 0,
-  },
-  {
-    date_reported: "2020-01-04",
-    country_code: "AS",
-    country: "American Samoa",
-    who_region: "WPR",
-    new_cases: 0,
-    cumulative_cases: 0,
-    new_deaths: 0,
-    cumulative_deaths: 0,
-  },
-];
+interface TableData {
+  date_reported: string;
+  country_code: string;
+  country: string;
+  who_region: string;
+  new_cases: number;
+  cumulative_cases: number;
+  new_deaths: number;
+  cumulative_deaths: number;
+}
 
-export function DataTable() {
+interface DataTableProps {
+  data: TableData[];
+}
+
+export function DataTable({ data: tableData }: DataTableProps) {
   return (
     <Card>
       <CardHeader>

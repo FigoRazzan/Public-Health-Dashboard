@@ -8,8 +8,34 @@ import { AgeChart } from "@/components/AgeChart";
 import { DataTable } from "@/components/DataTable";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Activity, Users, Heart, TrendingUp } from "lucide-react";
+import { useCovidData } from "@/hooks/useCovidData";
 
 const Index = () => {
+  const { loading, error, getStats, getTrendData, getRegionData, getAgeData, getTableData } = useCovidData();
+  const stats = getStats();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Memuat data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center text-danger">
+          <p className="text-xl font-bold mb-2">Error</p>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -32,42 +58,48 @@ const Index = () => {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <KPICard
                 title="Total Kasus Terkonfirmasi"
-                value="5,450,890"
-                trend={{ direction: "up", value: "+2.4%" }}
+                value={stats.totalCases.toLocaleString('id-ID')}
+                trend={{ 
+                  direction: stats.casesTrend >= 0 ? "up" : "down", 
+                  value: `${stats.casesTrend >= 0 ? '+' : ''}${stats.casesTrend.toFixed(1)}%` 
+                }}
                 icon={Activity}
                 variant="primary"
               />
               <KPICard
                 title="Total Kematian"
-                value="180,980"
-                trend={{ direction: "up", value: "+1.8%" }}
+                value={stats.totalDeaths.toLocaleString('id-ID')}
+                trend={{ 
+                  direction: stats.deathsTrend >= 0 ? "up" : "down", 
+                  value: `${stats.deathsTrend >= 0 ? '+' : ''}${stats.deathsTrend.toFixed(1)}%` 
+                }}
                 icon={Users}
                 variant="danger"
               />
               <KPICard
                 title="Total Sembuh"
-                value="5,120,400"
+                value={stats.totalRecovered.toLocaleString('id-ID')}
                 trend={{ direction: "down", value: "-0.5%" }}
                 icon={Heart}
                 variant="success"
               />
               <KPICard
                 title="Tingkat Kematian (CFR)"
-                value="3.3%"
+                value={`${stats.cfr.toFixed(1)}%`}
                 trend={{ direction: "down", value: "-0.2%" }}
                 icon={TrendingUp}
                 variant="warning"
               />
             </div>
 
-            <TrendChart />
+            <TrendChart data={getTrendData()} />
 
             <div className="grid gap-4 md:grid-cols-2">
-              <DistributionChart />
-              <AgeChart />
+              <DistributionChart data={getRegionData()} />
+              <AgeChart data={getAgeData()} />
             </div>
 
-            <DataTable />
+            <DataTable data={getTableData(10)} />
           </main>
         </div>
       </div>

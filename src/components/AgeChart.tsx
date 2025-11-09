@@ -10,15 +10,16 @@ import {
   Legend,
 } from "recharts";
 
-const data = [
-  { age: "0-17", cases: 234500 },
-  { age: "18-30", cases: 892340 },
-  { age: "31-45", cases: 1245670 },
-  { age: "46-60", cases: 1876540 },
-  { age: "60+", cases: 1201840 },
-];
+interface AgeData {
+  age: string;
+  cases: number;
+}
 
-export function AgeChart() {
+interface AgeChartProps {
+  data: AgeData[];
+}
+
+export function AgeChart({ data }: AgeChartProps) {
   return (
     <Card>
       <CardHeader>

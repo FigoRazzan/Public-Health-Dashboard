@@ -10,16 +10,17 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const data = [
-  { date: "Jan", kasusHarian: 4500, kematian: 120 },
-  { date: "Feb", kasusHarian: 5200, kematian: 145 },
-  { date: "Mar", kasusHarian: 6800, kematian: 198 },
-  { date: "Apr", kasusHarian: 8200, kematian: 234 },
-  { date: "Mei", kasusHarian: 7500, kematian: 210 },
-  { date: "Jun", kasusHarian: 6200, kematian: 178 },
-];
+interface TrendData {
+  date: string;
+  kasusHarian: number;
+  kematian: number;
+}
 
-export function TrendChart() {
+interface TrendChartProps {
+  data: TrendData[];
+}
+
+export function TrendChart({ data }: TrendChartProps) {
   return (
     <Card>
       <CardHeader>

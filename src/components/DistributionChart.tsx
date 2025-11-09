@@ -1,13 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
-const data = [
-  { name: "DKI Jakarta", value: 1245890 },
-  { name: "Jawa Barat", value: 982340 },
-  { name: "Jawa Tengah", value: 876230 },
-  { name: "Jawa Timur", value: 1124560 },
-  { name: "Bali", value: 321870 },
-];
+interface RegionData {
+  name: string;
+  value: number;
+}
+
+interface DistributionChartProps {
+  data: RegionData[];
+}
 
 const COLORS = [
   "hsl(var(--primary))",
@@ -17,7 +18,7 @@ const COLORS = [
   "hsl(var(--accent))",
 ];
 
-export function DistributionChart() {
+export function DistributionChart({ data }: DistributionChartProps) {
   return (
     <Card>
       <CardHeader>
