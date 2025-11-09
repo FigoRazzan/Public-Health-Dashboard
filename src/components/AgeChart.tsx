@@ -14,7 +14,13 @@ import { useFilters } from "@/contexts/FilterContext";
 
 interface AgeData {
   age: string;
-  cases: number;
+  cases?: number;
+  AFR?: number;
+  AMR?: number;
+  EMR?: number;
+  EUR?: number;
+  SEAR?: number;
+  WPR?: number;
 }
 
 interface AgeChartProps {
@@ -30,6 +36,15 @@ const REGION_COLORS: Record<string, string> = {
   'EUR': 'hsl(var(--primary))',     // Blue for Europe
   'SEAR': 'hsl(328, 100%, 54%)',    // Fuschia for South-East Asia
   'WPR': 'hsl(300, 47%, 75%)',      // Plum for Western Pacific
+};
+
+const REGION_NAMES: Record<string, string> = {
+  'AFR': 'Afrika',
+  'AMR': 'Amerika',
+  'EMR': 'Mediterania Timur',
+  'EUR': 'Eropa',
+  'SEAR': 'Asia Tenggara',
+  'WPR': 'Pasifik Barat',
 };
 
 export function AgeChart({ data }: AgeChartProps) {
@@ -50,15 +65,19 @@ export function AgeChart({ data }: AgeChartProps) {
   };
 
   const barColor = REGION_COLORS[filters.region] || REGION_COLORS['all'];
+  const showMultiRegion = filters.region === 'all';
+  const regions = ['AFR', 'AMR', 'EMR', 'EUR', 'SEAR', 'WPR'];
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Kasus Berdasarkan Kelompok Usia</CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            Filter: {getFilterText()}
-          </Badge>
+          {!showMultiRegion && (
+            <Badge variant="secondary" className="text-xs">
+              Filter: {getFilterText()}
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -79,7 +98,27 @@ export function AgeChart({ data }: AgeChartProps) {
               }}
             />
             <Legend />
-            <Bar dataKey="cases" fill={barColor} name="Jumlah Kasus" radius={[8, 8, 0, 0]} />
+            {showMultiRegion ? (
+              // Multi-region mode: show stacked bars per region
+              regions.map((region) => (
+                <Bar
+                  key={region}
+                  dataKey={region}
+                  fill={REGION_COLORS[region]}
+                  name={REGION_NAMES[region]}
+                  radius={[8, 8, 0, 0]}
+                  stackId="a"
+                />
+              ))
+            ) : (
+              // Single region mode: show one bar
+              <Bar 
+                dataKey="cases" 
+                fill={barColor} 
+                name="Jumlah Kasus" 
+                radius={[8, 8, 0, 0]} 
+              />
+            )}
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

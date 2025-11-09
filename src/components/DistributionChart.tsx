@@ -48,6 +48,18 @@ export function DistributionChart({ data }: DistributionChartProps) {
     return regionLabels[filters.region] || 'Semua Wilayah';
   };
 
+  // Custom label function that only shows label if percentage > 5%
+  const renderCustomLabel = (entry: any) => {
+    const total = data.reduce((sum, item) => sum + item.value, 0);
+    const percentage = (entry.value / total) * 100;
+    
+    // Only show label if percentage is greater than 5%
+    if (percentage > 5) {
+      return `${entry.name} (${percentage.toFixed(1)}%)`;
+    }
+    return '';
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -70,7 +82,8 @@ export function DistributionChart({ data }: DistributionChartProps) {
               fill="#8884d8"
               paddingAngle={5}
               dataKey="value"
-              label={(entry) => entry.name}
+              label={renderCustomLabel}
+              labelLine={true}
             >
               {data.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={REGION_COLORS[entry.name] || COLORS[index % COLORS.length]} />
@@ -81,6 +94,11 @@ export function DistributionChart({ data }: DistributionChartProps) {
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "var(--radius)",
+              }}
+              formatter={(value: number) => {
+                const total = data.reduce((sum, item) => sum + item.value, 0);
+                const percentage = (value / total) * 100;
+                return [`${value.toLocaleString('id-ID')} (${percentage.toFixed(1)}%)`, 'Kasus'];
               }}
             />
             <Legend />

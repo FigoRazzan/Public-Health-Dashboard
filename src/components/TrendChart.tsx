@@ -14,8 +14,21 @@ import { useFilters } from "@/contexts/FilterContext";
 
 interface TrendData {
   date: string;
-  kasusHarian: number;
-  kematian: number;
+  kasusHarian?: number;
+  kematian?: number;
+  // Region-specific data
+  AFR_cases?: number;
+  AMR_cases?: number;
+  EMR_cases?: number;
+  EUR_cases?: number;
+  SEAR_cases?: number;
+  WPR_cases?: number;
+  AFR_deaths?: number;
+  AMR_deaths?: number;
+  EMR_deaths?: number;
+  EUR_deaths?: number;
+  SEAR_deaths?: number;
+  WPR_deaths?: number;
 }
 
 interface TrendChartProps {
@@ -31,6 +44,15 @@ const REGION_COLORS: Record<string, string> = {
   'EUR': 'hsl(var(--primary))',     // Blue for Europe
   'SEAR': 'hsl(328, 100%, 54%)',    // Fuschia for South-East Asia
   'WPR': 'hsl(300, 47%, 75%)',      // Plum for Western Pacific
+};
+
+const REGION_NAMES: Record<string, string> = {
+  'AFR': 'Afrika',
+  'AMR': 'Amerika',
+  'EMR': 'Mediterania Timur',
+  'EUR': 'Eropa',
+  'SEAR': 'Asia Tenggara',
+  'WPR': 'Pasifik Barat',
 };
 
 export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
@@ -51,14 +73,18 @@ export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
     { value: 'all', label: 'Semua' },
   ];
 
+  const regions = ['AFR', 'AMR', 'EMR', 'EUR', 'SEAR', 'WPR'];
+  const showMultiRegion = filters.region === 'all';
   const primaryColor = REGION_COLORS[filters.region] || REGION_COLORS['all'];
-  const deathColor = 'hsl(var(--danger))'; // Always red for deaths
+  const deathColor = 'hsl(var(--danger))';
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Tren Kasus Harian</CardTitle>
+          <CardTitle>
+            {showMultiRegion ? 'Tren Kasus Harian per Wilayah' : 'Tren Kasus Harian'}
+          </CardTitle>
           <div className="flex gap-2">
             {timeRanges.map((range) => (
               <Button
@@ -91,22 +117,41 @@ export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
               }}
             />
             <Legend />
-            <Line
-              type="monotone"
-              dataKey="kasusHarian"
-              stroke={primaryColor}
-              strokeWidth={2}
-              name="Kasus Baru"
-              dot={{ fill: primaryColor }}
-            />
-            <Line
-              type="monotone"
-              dataKey="kematian"
-              stroke={deathColor}
-              strokeWidth={2}
-              name="Kematian Baru"
-              dot={{ fill: deathColor }}
-            />
+            {showMultiRegion ? (
+              // Multi-region mode: show all regions
+              regions.map((region) => (
+                <Line
+                  key={`${region}_cases`}
+                  type="monotone"
+                  dataKey={`${region}_cases`}
+                  stroke={REGION_COLORS[region]}
+                  strokeWidth={2}
+                  name={REGION_NAMES[region]}
+                  dot={false}
+                  connectNulls
+                />
+              ))
+            ) : (
+              // Single region mode: show cases and deaths
+              <>
+                <Line
+                  type="monotone"
+                  dataKey="kasusHarian"
+                  stroke={primaryColor}
+                  strokeWidth={2}
+                  name="Kasus Baru"
+                  dot={{ fill: primaryColor }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="kematian"
+                  stroke={deathColor}
+                  strokeWidth={2}
+                  name="Kematian Baru"
+                  dot={{ fill: deathColor }}
+                />
+              </>
+            )}
           </LineChart>
         </ResponsiveContainer>
       </CardContent>

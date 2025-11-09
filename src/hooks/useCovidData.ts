@@ -24,8 +24,21 @@ export interface CovidStats {
 
 export interface TrendData {
   date: string;
-  kasusHarian: number;
-  kematian: number;
+  kasusHarian?: number;
+  kematian?: number;
+  // Region-specific data
+  AFR_cases?: number;
+  AMR_cases?: number;
+  EMR_cases?: number;
+  EUR_cases?: number;
+  SEAR_cases?: number;
+  WPR_cases?: number;
+  AFR_deaths?: number;
+  AMR_deaths?: number;
+  EMR_deaths?: number;
+  EUR_deaths?: number;
+  SEAR_deaths?: number;
+  WPR_deaths?: number;
 }
 
 export interface RegionData {
@@ -35,7 +48,13 @@ export interface RegionData {
 
 export interface AgeData {
   age: string;
-  cases: number;
+  cases?: number;
+  AFR?: number;
+  AMR?: number;
+  EMR?: number;
+  EUR?: number;
+  SEAR?: number;
+  WPR?: number;
 }
 
 export function useCovidData(filters?: FilterState) {
@@ -161,12 +180,27 @@ export function useCovidData(filters?: FilterState) {
     };
   };
 
-  // Get trend data based on time range
+  // Get trend data based on time range (with per-region breakdown)
   const getTrendData = (timeRange: string = '6m'): TrendData[] => {
-    const filteredData = getFilteredData();
-    if (filteredData.length === 0) return [];
+    // Check if we need region breakdown or single region data
+    const needsRegionBreakdown = !filters || filters.region === 'all';
+    
+    // Get data based on filter mode
+    const baseData = needsRegionBreakdown ? data.filter(row => {
+      if (filters?.dateRange?.from && filters?.dateRange?.to) {
+        const rowDate = new Date(row.Date_reported);
+        const fromDate = new Date(filters.dateRange.from);
+        const toDate = new Date(filters.dateRange.to);
+        if (rowDate < fromDate || rowDate > toDate) {
+          return false;
+        }
+      }
+      return true;
+    }) : getFilteredData();
+    
+    if (baseData.length === 0) return [];
 
-    const dates = [...new Set(filteredData.map(row => row.Date_reported))].sort().reverse();
+    const dates = [...new Set(baseData.map(row => row.Date_reported))].sort().reverse();
     
     // Determine number of days based on timeRange
     let daysToShow = 180; // 6 months default
@@ -198,70 +232,164 @@ export function useCovidData(filters?: FilterState) {
     const relevantDates = dates.slice(0, daysToShow);
 
     if (groupBy === 'day') {
-      // Group by day
-      const dailyData = new Map<string, { cases: number; deaths: number }>();
+      // Group by day with per-region breakdown or single region
+      const dailyData = new Map<string, {
+        kasusHarian?: number; kematian?: number;
+        AFR_cases?: number; AMR_cases?: number; EMR_cases?: number;
+        EUR_cases?: number; SEAR_cases?: number; WPR_cases?: number;
+        AFR_deaths?: number; AMR_deaths?: number; EMR_deaths?: number;
+        EUR_deaths?: number; SEAR_deaths?: number; WPR_deaths?: number;
+      }>();
       
-      filteredData
+      baseData
         .filter(row => relevantDates.includes(row.Date_reported))
         .forEach(row => {
-          const existing = dailyData.get(row.Date_reported) || { cases: 0, deaths: 0 };
-          dailyData.set(row.Date_reported, {
-            cases: existing.cases + (row.New_cases || 0),
-            deaths: existing.deaths + (row.New_deaths || 0),
-          });
+          const existing = dailyData.get(row.Date_reported) || {
+            kasusHarian: 0, kematian: 0,
+            AFR_cases: 0, AMR_cases: 0, EMR_cases: 0,
+            EUR_cases: 0, SEAR_cases: 0, WPR_cases: 0,
+            AFR_deaths: 0, AMR_deaths: 0, EMR_deaths: 0,
+            EUR_deaths: 0, SEAR_deaths: 0, WPR_deaths: 0,
+          };
+          
+          if (needsRegionBreakdown) {
+            // Multi-region mode: break down by region
+            const region = row.WHO_region;
+            if (region === 'AFR') {
+              existing.AFR_cases += (row.New_cases || 0);
+              existing.AFR_deaths += (row.New_deaths || 0);
+            } else if (region === 'AMR') {
+              existing.AMR_cases += (row.New_cases || 0);
+              existing.AMR_deaths += (row.New_deaths || 0);
+            } else if (region === 'EMR') {
+              existing.EMR_cases += (row.New_cases || 0);
+              existing.EMR_deaths += (row.New_deaths || 0);
+            } else if (region === 'EUR') {
+              existing.EUR_cases += (row.New_cases || 0);
+              existing.EUR_deaths += (row.New_deaths || 0);
+            } else if (region === 'SEAR') {
+              existing.SEAR_cases += (row.New_cases || 0);
+              existing.SEAR_deaths += (row.New_deaths || 0);
+            } else if (region === 'WPR') {
+              existing.WPR_cases += (row.New_cases || 0);
+              existing.WPR_deaths += (row.New_deaths || 0);
+            }
+          } else {
+            // Single region mode: aggregate cases and deaths
+            existing.kasusHarian += (row.New_cases || 0);
+            existing.kematian += (row.New_deaths || 0);
+          }
+          
+          dailyData.set(row.Date_reported, existing);
         });
 
       return Array.from(dailyData.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([date, stats]) => ({
           date: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
-          kasusHarian: stats.cases,
-          kematian: stats.deaths,
+          ...stats,
         }));
     } else {
-      // Group by month
-      const monthlyData = new Map<string, { cases: number; deaths: number }>();
+      // Group by month with per-region breakdown or single region
+      const monthlyData = new Map<string, {
+        kasusHarian?: number; kematian?: number;
+        AFR_cases?: number; AMR_cases?: number; EMR_cases?: number;
+        EUR_cases?: number; SEAR_cases?: number; WPR_cases?: number;
+        AFR_deaths?: number; AMR_deaths?: number; EMR_deaths?: number;
+        EUR_deaths?: number; SEAR_deaths?: number; WPR_deaths?: number;
+      }>();
 
-      filteredData
+      baseData
         .filter(row => relevantDates.includes(row.Date_reported))
         .forEach(row => {
           const month = row.Date_reported.substring(0, 7); // YYYY-MM
-          const existing = monthlyData.get(month) || { cases: 0, deaths: 0 };
-          monthlyData.set(month, {
-            cases: existing.cases + (row.New_cases || 0),
-            deaths: existing.deaths + (row.New_deaths || 0),
-          });
+          const existing = monthlyData.get(month) || {
+            kasusHarian: 0, kematian: 0,
+            AFR_cases: 0, AMR_cases: 0, EMR_cases: 0,
+            EUR_cases: 0, SEAR_cases: 0, WPR_cases: 0,
+            AFR_deaths: 0, AMR_deaths: 0, EMR_deaths: 0,
+            EUR_deaths: 0, SEAR_deaths: 0, WPR_deaths: 0,
+          };
+          
+          if (needsRegionBreakdown) {
+            // Multi-region mode: break down by region
+            const region = row.WHO_region;
+            if (region === 'AFR') {
+              existing.AFR_cases! += (row.New_cases || 0);
+              existing.AFR_deaths! += (row.New_deaths || 0);
+            } else if (region === 'AMR') {
+              existing.AMR_cases! += (row.New_cases || 0);
+              existing.AMR_deaths! += (row.New_deaths || 0);
+            } else if (region === 'EMR') {
+              existing.EMR_cases! += (row.New_cases || 0);
+              existing.EMR_deaths! += (row.New_deaths || 0);
+            } else if (region === 'EUR') {
+              existing.EUR_cases! += (row.New_cases || 0);
+              existing.EUR_deaths! += (row.New_deaths || 0);
+            } else if (region === 'SEAR') {
+              existing.SEAR_cases! += (row.New_cases || 0);
+              existing.SEAR_deaths! += (row.New_deaths || 0);
+            } else if (region === 'WPR') {
+              existing.WPR_cases! += (row.New_cases || 0);
+              existing.WPR_deaths! += (row.New_deaths || 0);
+            }
+          } else {
+            // Single region mode: aggregate cases and deaths
+            existing.kasusHarian! += (row.New_cases || 0);
+            existing.kematian! += (row.New_deaths || 0);
+          }
+          
+          monthlyData.set(month, existing);
         });
 
       return Array.from(monthlyData.entries())
         .sort((a, b) => a[0].localeCompare(b[0]))
         .map(([month, stats]) => ({
           date: new Date(month + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
-          kasusHarian: stats.cases,
-          kematian: stats.deaths,
+          ...stats,
         }));
     }
   };
 
-  // Get region distribution with optional region filter
+  // Get region distribution with optional region filter and time range
   const getRegionData = (selectedRegions?: string[]): RegionData[] => {
     const filteredData = getFilteredData();
     if (filteredData.length === 0) return [];
 
-    const latestDate = filteredData.reduce((max, row) => {
-      return row.Date_reported > max ? row.Date_reported : max;
-    }, '');
+    const timeRange = filters?.chartTimeRange || '6m';
+    const dates = [...new Set(filteredData.map(row => row.Date_reported))].sort().reverse();
+    
+    // Determine number of days based on timeRange
+    let daysToShow = 180; // 6 months default
+    switch(timeRange) {
+      case '1m':
+        daysToShow = 30;
+        break;
+      case '3m':
+        daysToShow = 90;
+        break;
+      case '6m':
+        daysToShow = 180;
+        break;
+      case '1y':
+        daysToShow = 365;
+        break;
+      case 'all':
+        daysToShow = dates.length;
+        break;
+    }
 
-    const latestData = filteredData.filter(row => row.Date_reported === latestDate);
+    const relevantDates = dates.slice(0, daysToShow);
+    const timeRangeData = filteredData.filter(row => relevantDates.includes(row.Date_reported));
 
     const regionMap = new Map<string, number>();
-    latestData.forEach(row => {
+    timeRangeData.forEach(row => {
       const region = row.WHO_region || 'Unknown';
       // Filter by selected regions if provided
       if (selectedRegions && !selectedRegions.includes(region)) {
         return;
       }
-      regionMap.set(region, (regionMap.get(region) || 0) + (row.Cumulative_cases || 0));
+      regionMap.set(region, (regionMap.get(region) || 0) + (row.New_cases || 0));
     });
 
     const regionNames: Record<string, string> = {
@@ -281,35 +409,122 @@ export function useCovidData(filters?: FilterState) {
       .sort((a, b) => b.value - a.value);
   };
 
-  // Get age distribution based on selected regions
+  // Get age distribution based on selected regions and time range
   const getAgeData = (selectedRegions?: string[]): AgeData[] => {
-    const filteredData = getFilteredData();
-    if (filteredData.length === 0) return [];
+    const needsRegionBreakdown = !filters || filters.region === 'all';
+    const baseData = needsRegionBreakdown ? data.filter(row => {
+      if (filters?.dateRange?.from && filters?.dateRange?.to) {
+        const rowDate = new Date(row.Date_reported);
+        const fromDate = new Date(filters.dateRange.from);
+        const toDate = new Date(filters.dateRange.to);
+        if (rowDate < fromDate || rowDate > toDate) {
+          return false;
+        }
+      }
+      return true;
+    }) : getFilteredData();
+    
+    if (baseData.length === 0) return [];
 
-    // Get latest date
-    const latestDate = filteredData.reduce((max, row) => {
-      return row.Date_reported > max ? row.Date_reported : max;
-    }, '');
+    const timeRange = filters?.chartTimeRange || '6m';
+    const dates = [...new Set(baseData.map(row => row.Date_reported))].sort().reverse();
+    
+    // Determine number of days based on timeRange
+    let daysToShow = 180; // 6 months default
+    switch(timeRange) {
+      case '1m':
+        daysToShow = 30;
+        break;
+      case '3m':
+        daysToShow = 90;
+        break;
+      case '6m':
+        daysToShow = 180;
+        break;
+      case '1y':
+        daysToShow = 365;
+        break;
+      case 'all':
+        daysToShow = dates.length;
+        break;
+    }
 
-    // Filter by selected regions
-    const regionFilteredData = filteredData.filter(row => {
-      if (!selectedRegions || selectedRegions.length === 0) return true;
-      return row.Date_reported === latestDate && selectedRegions.includes(row.WHO_region);
-    });
+    const relevantDates = dates.slice(0, daysToShow);
+    const timeRangeData = baseData.filter(row => relevantDates.includes(row.Date_reported));
 
-    // Calculate total cases from selected regions
-    const totalCases = regionFilteredData
-      .filter(row => row.Date_reported === latestDate)
-      .reduce((sum, row) => sum + (row.Cumulative_cases || 0), 0);
+    if (needsRegionBreakdown) {
+      // Multi-region mode: calculate per region based on time range
+      const regionTotals: Record<string, number> = {
+        AFR: 0, AMR: 0, EMR: 0, EUR: 0, SEAR: 0, WPR: 0
+      };
 
-    // WHO COVID-19 age distribution patterns (approximate)
-    return [
-      { age: '0-17', cases: Math.round(totalCases * 0.04) },
-      { age: '18-30', cases: Math.round(totalCases * 0.16) },
-      { age: '31-45', cases: Math.round(totalCases * 0.23) },
-      { age: '46-60', cases: Math.round(totalCases * 0.34) },
-      { age: '60+', cases: Math.round(totalCases * 0.23) },
-    ];
+      timeRangeData.forEach(row => {
+        const region = row.WHO_region;
+        if (region && regionTotals.hasOwnProperty(region)) {
+          regionTotals[region] += (row.New_cases || 0);
+        }
+      });
+
+      // WHO COVID-19 age distribution patterns (approximate)
+      return [
+        {
+          age: '0-17',
+          AFR: Math.round(regionTotals.AFR * 0.04),
+          AMR: Math.round(regionTotals.AMR * 0.04),
+          EMR: Math.round(regionTotals.EMR * 0.04),
+          EUR: Math.round(regionTotals.EUR * 0.04),
+          SEAR: Math.round(regionTotals.SEAR * 0.04),
+          WPR: Math.round(regionTotals.WPR * 0.04),
+        },
+        {
+          age: '18-30',
+          AFR: Math.round(regionTotals.AFR * 0.16),
+          AMR: Math.round(regionTotals.AMR * 0.16),
+          EMR: Math.round(regionTotals.EMR * 0.16),
+          EUR: Math.round(regionTotals.EUR * 0.16),
+          SEAR: Math.round(regionTotals.SEAR * 0.16),
+          WPR: Math.round(regionTotals.WPR * 0.16),
+        },
+        {
+          age: '31-45',
+          AFR: Math.round(regionTotals.AFR * 0.23),
+          AMR: Math.round(regionTotals.AMR * 0.23),
+          EMR: Math.round(regionTotals.EMR * 0.23),
+          EUR: Math.round(regionTotals.EUR * 0.23),
+          SEAR: Math.round(regionTotals.SEAR * 0.23),
+          WPR: Math.round(regionTotals.WPR * 0.23),
+        },
+        {
+          age: '46-60',
+          AFR: Math.round(regionTotals.AFR * 0.34),
+          AMR: Math.round(regionTotals.AMR * 0.34),
+          EMR: Math.round(regionTotals.EMR * 0.34),
+          EUR: Math.round(regionTotals.EUR * 0.34),
+          SEAR: Math.round(regionTotals.SEAR * 0.34),
+          WPR: Math.round(regionTotals.WPR * 0.34),
+        },
+        {
+          age: '60+',
+          AFR: Math.round(regionTotals.AFR * 0.23),
+          AMR: Math.round(regionTotals.AMR * 0.23),
+          EMR: Math.round(regionTotals.EMR * 0.23),
+          EUR: Math.round(regionTotals.EUR * 0.23),
+          SEAR: Math.round(regionTotals.SEAR * 0.23),
+          WPR: Math.round(regionTotals.WPR * 0.23),
+        },
+      ];
+    } else {
+      // Single region mode: calculate total for selected region based on time range
+      const totalCases = timeRangeData.reduce((sum, row) => sum + (row.New_cases || 0), 0);
+
+      return [
+        { age: '0-17', cases: Math.round(totalCases * 0.04) },
+        { age: '18-30', cases: Math.round(totalCases * 0.16) },
+        { age: '31-45', cases: Math.round(totalCases * 0.23) },
+        { age: '46-60', cases: Math.round(totalCases * 0.34) },
+        { age: '60+', cases: Math.round(totalCases * 0.23) },
+      ];
+    }
   };
 
   // Get latest table data with filters
