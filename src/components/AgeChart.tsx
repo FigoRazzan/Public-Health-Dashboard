@@ -9,6 +9,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { useFilters } from "@/contexts/FilterContext";
 
 interface AgeData {
   age: string;
@@ -17,13 +19,35 @@ interface AgeData {
 
 interface AgeChartProps {
   data: AgeData[];
+  onRegionFilterChange?: (regions: string[]) => void;
 }
 
 export function AgeChart({ data }: AgeChartProps) {
+  const { filters } = useFilters();
+
+  const regionLabels: Record<string, string> = {
+    'all': 'Semua Wilayah',
+    'AFR': 'Africa',
+    'AMR': 'Americas',
+    'EMR': 'Eastern Mediterranean',
+    'EUR': 'Europe',
+    'SEAR': 'South-East Asia',
+    'WPR': 'Western Pacific',
+  };
+
+  const getFilterText = () => {
+    return regionLabels[filters.region] || 'Semua Wilayah';
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Kasus Berdasarkan Kelompok Usia</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Kasus Berdasarkan Kelompok Usia</CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            Filter: {getFilterText()}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>

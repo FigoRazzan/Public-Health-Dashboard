@@ -9,6 +9,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Button } from "@/components/ui/button";
+import { useFilters } from "@/contexts/FilterContext";
 
 interface TrendData {
   date: string;
@@ -18,13 +20,45 @@ interface TrendData {
 
 interface TrendChartProps {
   data: TrendData[];
+  onTimeRangeChange?: (timeRange: string) => void;
 }
 
-export function TrendChart({ data }: TrendChartProps) {
+export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
+  const { filters, setChartTimeRange } = useFilters();
+
+  const handleTimeRangeChange = (range: string) => {
+    setChartTimeRange(range);
+    if (onTimeRangeChange) {
+      onTimeRangeChange(range);
+    }
+  };
+
+  const timeRanges = [
+    { value: '1m', label: '1 Bulan' },
+    { value: '3m', label: '3 Bulan' },
+    { value: '6m', label: '6 Bulan' },
+    { value: '1y', label: '1 Tahun' },
+    { value: 'all', label: 'Semua' },
+  ];
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tren Kasus Harian (6 Bulan Terakhir)</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Tren Kasus Harian</CardTitle>
+          <div className="flex gap-2">
+            {timeRanges.map((range) => (
+              <Button
+                key={range.value}
+                variant={filters.chartTimeRange === range.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleTimeRangeChange(range.value)}
+              >
+                {range.label}
+              </Button>
+            ))}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={350}>

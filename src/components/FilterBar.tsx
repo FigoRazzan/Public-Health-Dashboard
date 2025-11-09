@@ -11,14 +11,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { id } from "date-fns/locale";
-import { useState } from "react";
+import { useFilters } from "@/contexts/FilterContext";
 import { DateRange } from "react-day-picker";
 
 export function FilterBar() {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(2024, 0, 1),
-    to: new Date(),
-  });
+  const { filters, setDateRange, setRegion, setDataType } = useFilters();
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg bg-card p-4 border">
@@ -27,14 +24,14 @@ export function FilterBar() {
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
-              {date?.from ? (
-                date.to ? (
+              {filters.dateRange?.from ? (
+                filters.dateRange.to ? (
                   <>
-                    {format(date.from, "dd MMM yyyy", { locale: id })} -{" "}
-                    {format(date.to, "dd MMM yyyy", { locale: id })}
+                    {format(filters.dateRange.from, "dd MMM yyyy", { locale: id })} -{" "}
+                    {format(filters.dateRange.to, "dd MMM yyyy", { locale: id })}
                   </>
                 ) : (
-                  format(date.from, "dd MMM yyyy", { locale: id })
+                  format(filters.dateRange.from, "dd MMM yyyy", { locale: id })
                 )
               ) : (
                 <span>Pilih Rentang Tanggal</span>
@@ -45,9 +42,9 @@ export function FilterBar() {
             <CalendarComponent
               initialFocus
               mode="range"
-              defaultMonth={date?.from}
-              selected={date}
-              onSelect={setDate}
+              defaultMonth={filters.dateRange?.from}
+              selected={filters.dateRange}
+              onSelect={setDateRange}
               numberOfMonths={2}
               locale={id}
               className="pointer-events-auto"
@@ -58,7 +55,7 @@ export function FilterBar() {
 
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-muted-foreground" />
-        <Select defaultValue="all">
+        <Select value={filters.region} onValueChange={setRegion}>
           <SelectTrigger className="w-[200px]">
             <SelectValue placeholder="Pilih Wilayah WHO" />
           </SelectTrigger>
@@ -76,7 +73,7 @@ export function FilterBar() {
 
       <div className="flex items-center gap-2">
         <Activity className="h-4 w-4 text-muted-foreground" />
-        <Select defaultValue="covid">
+        <Select value={filters.dataType} onValueChange={setDataType}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Tipe Data" />
           </SelectTrigger>
@@ -88,7 +85,9 @@ export function FilterBar() {
         </Select>
       </div>
 
-      <Button className="ml-auto bg-primary hover:bg-primary-dark">Terapkan Filter</Button>
+      <div className="ml-auto text-sm text-muted-foreground">
+        Filter aktif diterapkan secara otomatis
+      </div>
     </div>
   );
 }

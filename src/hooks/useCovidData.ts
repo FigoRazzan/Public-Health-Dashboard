@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Papa from 'papaparse';
+import { FilterState } from '@/contexts/FilterContext';
 
 export interface CovidDataRow {
   Date_reported: string;
@@ -37,7 +38,7 @@ export interface AgeData {
   cases: number;
 }
 
-export function useCovidData() {
+export function useCovidData(filters?: FilterState) {
   const [data, setData] = useState<CovidDataRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,9 +72,35 @@ export function useCovidData() {
     fetchData();
   }, []);
 
+  // Helper function to filter data based on filters
+  const getFilteredData = () => {
+    if (!filters) return data;
+
+    return data.filter(row => {
+      // Filter by date range
+      if (filters.dateRange?.from && filters.dateRange?.to) {
+        const rowDate = new Date(row.Date_reported);
+        const fromDate = new Date(filters.dateRange.from);
+        const toDate = new Date(filters.dateRange.to);
+        if (rowDate < fromDate || rowDate > toDate) {
+          return false;
+        }
+      }
+
+      // Filter by region
+      if (filters.region !== 'all' && row.WHO_region !== filters.region) {
+        return false;
+      }
+
+      return true;
+    });
+  };
+
   // Calculate statistics
   const getStats = (): CovidStats => {
-    if (data.length === 0) {
+    const filteredData = getFilteredData();
+    
+    if (filteredData.length === 0) {
       return {
         totalCases: 0,
         totalDeaths: 0,
@@ -84,12 +111,12 @@ export function useCovidData() {
       };
     }
 
-    // Get latest data (most recent date)
-    const latestDate = data.reduce((max, row) => {
+    // Get latest data (most recent date in filtered data)
+    const latestDate = filteredData.reduce((max, row) => {
       return row.Date_reported > max ? row.Date_reported : max;
     }, '');
 
-    const latestData = data.filter(row => row.Date_reported === latestDate);
+    const latestData = filteredData.filter(row => row.Date_reported === latestDate);
     
     const totalCases = latestData.reduce((sum, row) => sum + (row.Cumulative_cases || 0), 0);
     const totalDeaths = latestData.reduce((sum, row) => sum + (row.Cumulative_deaths || 0), 0);
@@ -101,23 +128,23 @@ export function useCovidData() {
     const cfr = totalCases > 0 ? (totalDeaths / totalCases) * 100 : 0;
 
     // Calculate trend (compare last 7 days with previous 7 days)
-    const dates = [...new Set(data.map(row => row.Date_reported))].sort().reverse();
+    const dates = [...new Set(filteredData.map(row => row.Date_reported))].sort().reverse();
     const last7Days = dates.slice(0, 7);
     const prev7Days = dates.slice(7, 14);
 
-    const last7Cases = data
+    const last7Cases = filteredData
       .filter(row => last7Days.includes(row.Date_reported))
       .reduce((sum, row) => sum + (row.New_cases || 0), 0);
 
-    const prev7Cases = data
+    const prev7Cases = filteredData
       .filter(row => prev7Days.includes(row.Date_reported))
       .reduce((sum, row) => sum + (row.New_cases || 0), 0);
 
-    const last7Deaths = data
+    const last7Deaths = filteredData
       .filter(row => last7Days.includes(row.Date_reported))
       .reduce((sum, row) => sum + (row.New_deaths || 0), 0);
 
-    const prev7Deaths = data
+    const prev7Deaths = filteredData
       .filter(row => prev7Days.includes(row.Date_reported))
       .reduce((sum, row) => sum + (row.New_deaths || 0), 0);
 
@@ -134,50 +161,106 @@ export function useCovidData() {
     };
   };
 
-  // Get trend data for last 6 months
-  const getTrendData = (): TrendData[] => {
-    if (data.length === 0) return [];
+  // Get trend data based on time range
+  const getTrendData = (timeRange: string = '6m'): TrendData[] => {
+    const filteredData = getFilteredData();
+    if (filteredData.length === 0) return [];
 
-    const dates = [...new Set(data.map(row => row.Date_reported))].sort().reverse();
-    const last6Months = dates.slice(0, 180); // Approximately 6 months
+    const dates = [...new Set(filteredData.map(row => row.Date_reported))].sort().reverse();
+    
+    // Determine number of days based on timeRange
+    let daysToShow = 180; // 6 months default
+    let groupBy: 'day' | 'month' = 'month';
+    
+    switch(timeRange) {
+      case '1m':
+        daysToShow = 30;
+        groupBy = 'day';
+        break;
+      case '3m':
+        daysToShow = 90;
+        groupBy = 'month';
+        break;
+      case '6m':
+        daysToShow = 180;
+        groupBy = 'month';
+        break;
+      case '1y':
+        daysToShow = 365;
+        groupBy = 'month';
+        break;
+      case 'all':
+        daysToShow = dates.length;
+        groupBy = 'month';
+        break;
+    }
 
-    // Group by month
-    const monthlyData = new Map<string, { cases: number; deaths: number }>();
+    const relevantDates = dates.slice(0, daysToShow);
 
-    data
-      .filter(row => last6Months.includes(row.Date_reported))
-      .forEach(row => {
-        const month = row.Date_reported.substring(0, 7); // YYYY-MM
-        const existing = monthlyData.get(month) || { cases: 0, deaths: 0 };
-        monthlyData.set(month, {
-          cases: existing.cases + (row.New_cases || 0),
-          deaths: existing.deaths + (row.New_deaths || 0),
+    if (groupBy === 'day') {
+      // Group by day
+      const dailyData = new Map<string, { cases: number; deaths: number }>();
+      
+      filteredData
+        .filter(row => relevantDates.includes(row.Date_reported))
+        .forEach(row => {
+          const existing = dailyData.get(row.Date_reported) || { cases: 0, deaths: 0 };
+          dailyData.set(row.Date_reported, {
+            cases: existing.cases + (row.New_cases || 0),
+            deaths: existing.deaths + (row.New_deaths || 0),
+          });
         });
-      });
 
-    return Array.from(monthlyData.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .slice(-6)
-      .map(([month, stats]) => ({
-        date: new Date(month + '-01').toLocaleDateString('id-ID', { month: 'short' }),
-        kasusHarian: stats.cases,
-        kematian: stats.deaths,
-      }));
+      return Array.from(dailyData.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([date, stats]) => ({
+          date: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+          kasusHarian: stats.cases,
+          kematian: stats.deaths,
+        }));
+    } else {
+      // Group by month
+      const monthlyData = new Map<string, { cases: number; deaths: number }>();
+
+      filteredData
+        .filter(row => relevantDates.includes(row.Date_reported))
+        .forEach(row => {
+          const month = row.Date_reported.substring(0, 7); // YYYY-MM
+          const existing = monthlyData.get(month) || { cases: 0, deaths: 0 };
+          monthlyData.set(month, {
+            cases: existing.cases + (row.New_cases || 0),
+            deaths: existing.deaths + (row.New_deaths || 0),
+          });
+        });
+
+      return Array.from(monthlyData.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([month, stats]) => ({
+          date: new Date(month + '-01').toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }),
+          kasusHarian: stats.cases,
+          kematian: stats.deaths,
+        }));
+    }
   };
 
-  // Get region distribution
-  const getRegionData = (): RegionData[] => {
-    if (data.length === 0) return [];
+  // Get region distribution with optional region filter
+  const getRegionData = (selectedRegions?: string[]): RegionData[] => {
+    const filteredData = getFilteredData();
+    if (filteredData.length === 0) return [];
 
-    const latestDate = data.reduce((max, row) => {
+    const latestDate = filteredData.reduce((max, row) => {
       return row.Date_reported > max ? row.Date_reported : max;
     }, '');
 
-    const latestData = data.filter(row => row.Date_reported === latestDate);
+    const latestData = filteredData.filter(row => row.Date_reported === latestDate);
 
     const regionMap = new Map<string, number>();
     latestData.forEach(row => {
       const region = row.WHO_region || 'Unknown';
+      // Filter by selected regions if provided
+      if (selectedRegions && !selectedRegions.includes(region)) {
+        return;
+      }
       regionMap.set(region, (regionMap.get(region) || 0) + (row.Cumulative_cases || 0));
     });
 
@@ -195,16 +278,29 @@ export function useCovidData() {
         name: regionNames[region] || region,
         value,
       }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 5);
+      .sort((a, b) => b.value - a.value);
   };
 
-  // Get age distribution (simulated based on WHO patterns)
-  const getAgeData = (): AgeData[] => {
-    if (data.length === 0) return [];
+  // Get age distribution based on selected regions
+  const getAgeData = (selectedRegions?: string[]): AgeData[] => {
+    const filteredData = getFilteredData();
+    if (filteredData.length === 0) return [];
 
-    const stats = getStats();
-    const totalCases = stats.totalCases;
+    // Get latest date
+    const latestDate = filteredData.reduce((max, row) => {
+      return row.Date_reported > max ? row.Date_reported : max;
+    }, '');
+
+    // Filter by selected regions
+    const regionFilteredData = filteredData.filter(row => {
+      if (!selectedRegions || selectedRegions.length === 0) return true;
+      return row.Date_reported === latestDate && selectedRegions.includes(row.WHO_region);
+    });
+
+    // Calculate total cases from selected regions
+    const totalCases = regionFilteredData
+      .filter(row => row.Date_reported === latestDate)
+      .reduce((sum, row) => sum + (row.Cumulative_cases || 0), 0);
 
     // WHO COVID-19 age distribution patterns (approximate)
     return [
@@ -216,15 +312,16 @@ export function useCovidData() {
     ];
   };
 
-  // Get latest table data
+  // Get latest table data with filters
   const getTableData = (limit: number = 10) => {
-    if (data.length === 0) return [];
+    const filteredData = getFilteredData();
+    if (filteredData.length === 0) return [];
 
-    const latestDate = data.reduce((max, row) => {
+    const latestDate = filteredData.reduce((max, row) => {
       return row.Date_reported > max ? row.Date_reported : max;
     }, '');
 
-    return data
+    return filteredData
       .filter(row => row.Date_reported === latestDate)
       .sort((a, b) => (b.Cumulative_cases || 0) - (a.Cumulative_cases || 0))
       .slice(0, limit)

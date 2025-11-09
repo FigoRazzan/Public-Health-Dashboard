@@ -9,10 +9,23 @@ import { DataTable } from "@/components/DataTable";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Activity, Users, Heart, TrendingUp } from "lucide-react";
 import { useCovidData } from "@/hooks/useCovidData";
+import { FilterProvider, useFilters } from "@/contexts/FilterContext";
 
-const Index = () => {
-  const { loading, error, getStats, getTrendData, getRegionData, getAgeData, getTableData } = useCovidData();
+const DashboardContent = () => {
+  const { filters } = useFilters();
+  const { loading, error, getStats, getTrendData, getRegionData, getAgeData, getTableData } = useCovidData(filters);
+  
   const stats = getStats();
+  const trendData = getTrendData(filters.chartTimeRange);
+  
+  // Use main region filter for both charts
+  const regionFilter = filters.region === 'all' 
+    ? ['AFR', 'AMR', 'EMR', 'EUR', 'SEAR', 'WPR'] 
+    : [filters.region];
+  
+  const regionData = getRegionData(regionFilter);
+  const ageData = getAgeData(regionFilter);
+  const tableData = getTableData(10);
 
   if (loading) {
     return (
@@ -92,18 +105,26 @@ const Index = () => {
               />
             </div>
 
-            <TrendChart data={getTrendData()} />
+            <TrendChart data={trendData} />
 
             <div className="grid gap-4 md:grid-cols-2">
-              <DistributionChart data={getRegionData()} />
-              <AgeChart data={getAgeData()} />
+              <DistributionChart data={regionData} />
+              <AgeChart data={ageData} />
             </div>
 
-            <DataTable data={getTableData(10)} />
+            <DataTable data={tableData} />
           </main>
         </div>
       </div>
     </SidebarProvider>
+  );
+};
+
+const Index = () => {
+  return (
+    <FilterProvider>
+      <DashboardContent />
+    </FilterProvider>
   );
 };
 

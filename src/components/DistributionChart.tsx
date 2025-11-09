@@ -1,5 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { useFilters } from "@/contexts/FilterContext";
 
 interface RegionData {
   name: string;
@@ -8,6 +10,7 @@ interface RegionData {
 
 interface DistributionChartProps {
   data: RegionData[];
+  onRegionFilterChange?: (regions: string[]) => void;
 }
 
 const COLORS = [
@@ -16,13 +19,35 @@ const COLORS = [
   "hsl(var(--warning))",
   "hsl(var(--danger))",
   "hsl(var(--accent))",
+  "hsl(210, 60%, 70%)",
 ];
 
 export function DistributionChart({ data }: DistributionChartProps) {
+  const { filters } = useFilters();
+
+  const regionLabels: Record<string, string> = {
+    'all': 'Semua Wilayah',
+    'AFR': 'Africa',
+    'AMR': 'Americas',
+    'EMR': 'Eastern Mediterranean',
+    'EUR': 'Europe',
+    'SEAR': 'South-East Asia',
+    'WPR': 'Western Pacific',
+  };
+
+  const getFilterText = () => {
+    return regionLabels[filters.region] || 'Semua Wilayah';
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Distribusi Kasus per Wilayah</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Distribusi Kasus per Wilayah</CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            Filter: {getFilterText()}
+          </Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
