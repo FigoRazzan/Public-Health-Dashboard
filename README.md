@@ -72,4 +72,7 @@ To connect a domain, navigate to Project > Settings > Domains and click Connect 
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
 # Public-Health-Dashboard
+<<<<<<< HEAD
 # Public-Health-Dashboard
+=======
+>>>>>>> f1acd96603ca26ac43bb2e1a9830182e243ccc16

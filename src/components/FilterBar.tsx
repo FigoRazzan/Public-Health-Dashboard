@@ -59,6 +59,7 @@ export function FilterBar() {
       <div className="flex items-center gap-2">
         <MapPin className="h-4 w-4 text-muted-foreground" />
         <Select defaultValue="all">
+<<<<<<< HEAD
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Pilih Wilayah" />
           </SelectTrigger>
@@ -69,6 +70,19 @@ export function FilterBar() {
             <SelectItem value="jateng">Jawa Tengah</SelectItem>
             <SelectItem value="jatim">Jawa Timur</SelectItem>
             <SelectItem value="bali">Bali</SelectItem>
+=======
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Pilih Wilayah WHO" />
+          </SelectTrigger>
+          <SelectContent className="bg-popover">
+            <SelectItem value="all">Semua Wilayah</SelectItem>
+            <SelectItem value="AFR">AFR - Africa</SelectItem>
+            <SelectItem value="AMR">AMR - Americas</SelectItem>
+            <SelectItem value="EMR">EMR - Eastern Mediterranean</SelectItem>
+            <SelectItem value="EUR">EUR - Europe</SelectItem>
+            <SelectItem value="SEAR">SEAR - South-East Asia</SelectItem>
+            <SelectItem value="WPR">WPR - Western Pacific</SelectItem>
+>>>>>>> f1acd96603ca26ac43bb2e1a9830182e243ccc16
           </SelectContent>
         </Select>
       </div>
