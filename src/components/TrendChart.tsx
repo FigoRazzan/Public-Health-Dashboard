@@ -23,6 +23,16 @@ interface TrendChartProps {
   onTimeRangeChange?: (timeRange: string) => void;
 }
 
+const REGION_COLORS: Record<string, string> = {
+  'all': 'hsl(var(--primary))',
+  'AFR': 'hsl(25, 45%, 35%)',       // Dark Brown for Africa
+  'AMR': 'hsl(var(--success))',     // Green for Americas
+  'EMR': 'hsl(var(--warning))',     // Orange for Eastern Mediterranean
+  'EUR': 'hsl(var(--primary))',     // Blue for Europe
+  'SEAR': 'hsl(328, 100%, 54%)',    // Fuschia for South-East Asia
+  'WPR': 'hsl(300, 47%, 75%)',      // Plum for Western Pacific
+};
+
 export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
   const { filters, setChartTimeRange } = useFilters();
 
@@ -40,6 +50,9 @@ export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
     { value: '1y', label: '1 Tahun' },
     { value: 'all', label: 'Semua' },
   ];
+
+  const primaryColor = REGION_COLORS[filters.region] || REGION_COLORS['all'];
+  const deathColor = 'hsl(var(--danger))'; // Always red for deaths
 
   return (
     <Card>
@@ -81,18 +94,18 @@ export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
             <Line
               type="monotone"
               dataKey="kasusHarian"
-              stroke="hsl(var(--primary))"
+              stroke={primaryColor}
               strokeWidth={2}
               name="Kasus Baru"
-              dot={{ fill: "hsl(var(--primary))" }}
+              dot={{ fill: primaryColor }}
             />
             <Line
               type="monotone"
               dataKey="kematian"
-              stroke="hsl(var(--danger))"
+              stroke={deathColor}
               strokeWidth={2}
               name="Kematian Baru"
-              dot={{ fill: "hsl(var(--danger))" }}
+              dot={{ fill: deathColor }}
             />
           </LineChart>
         </ResponsiveContainer>

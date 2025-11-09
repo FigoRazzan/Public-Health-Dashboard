@@ -1,4 +1,4 @@
-import { Calendar, MapPin, Activity } from "lucide-react";
+import { Calendar, MapPin, Activity, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -13,15 +13,77 @@ import { format } from "date-fns";
 import { id } from "date-fns/locale";
 import { useFilters } from "@/contexts/FilterContext";
 import { DateRange } from "react-day-picker";
+import { useState } from "react";
 
 export function FilterBar() {
   const { filters, setDateRange, setRegion, setDataType } = useFilters();
+  const [month, setMonth] = useState<Date>(filters.dateRange?.from || new Date(2020, 0));
+  const [tempStartDate, setTempStartDate] = useState<Date | undefined>(filters.dateRange?.from);
+  const [tempEndDate, setTempEndDate] = useState<Date | undefined>(filters.dateRange?.to);
+  const [isSelectingStart, setIsSelectingStart] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
+
+  // Generate years from 2020 to current year
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: currentYear - 2019 }, (_, i) => 2020 + i);
+  
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+
+  const handleMonthChange = (monthIndex: string) => {
+    const newMonth = new Date(month.getFullYear(), parseInt(monthIndex));
+    setMonth(newMonth);
+  };
+
+  const handleYearChange = (year: string) => {
+    const newMonth = new Date(parseInt(year), month.getMonth());
+    setMonth(newMonth);
+  };
+
+  const goToPreviousMonth = () => {
+    setMonth(new Date(month.getFullYear(), month.getMonth() - 1));
+  };
+
+  const goToNextMonth = () => {
+    setMonth(new Date(month.getFullYear(), month.getMonth() + 1));
+  };
+
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date) return;
+    
+    if (isSelectingStart) {
+      setTempStartDate(date);
+      setIsSelectingStart(false);
+    } else {
+      setTempEndDate(date);
+    }
+  };
+
+  const handleApplyDates = () => {
+    if (tempStartDate && tempEndDate) {
+      // Ensure start date is before end date
+      if (tempStartDate > tempEndDate) {
+        setDateRange({ from: tempEndDate, to: tempStartDate });
+      } else {
+        setDateRange({ from: tempStartDate, to: tempEndDate });
+      }
+      setIsOpen(false);
+    }
+  };
+
+  const handleReset = () => {
+    setTempStartDate(undefined);
+    setTempEndDate(undefined);
+    setIsSelectingStart(true);
+  };
 
   return (
     <div className="flex flex-wrap items-center gap-4 rounded-lg bg-card p-4 border">
       <div className="flex items-center gap-2">
         <Calendar className="h-4 w-4 text-muted-foreground" />
-        <Popover>
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
             <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
               {filters.dateRange?.from ? (
@@ -39,16 +101,112 @@ export function FilterBar() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0 bg-popover" align="start">
+            <div className="p-3 border-b">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={goToPreviousMonth}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex gap-2">
+                  <Select
+                    value={month.getMonth().toString()}
+                    onValueChange={handleMonthChange}
+                  >
+                    <SelectTrigger className="w-[120px] h-7">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {months.map((m, i) => (
+                        <SelectItem key={i} value={i.toString()}>
+                          {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={month.getFullYear().toString()}
+                    onValueChange={handleYearChange}
+                  >
+                    <SelectTrigger className="w-[90px] h-7">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-popover">
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={goToNextMonth}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            
+            <div className="p-3 border-b bg-muted/50">
+              <div className="flex gap-2 mb-2">
+                <Button
+                  variant={isSelectingStart ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsSelectingStart(true)}
+                  className="flex-1"
+                >
+                  Mulai: {tempStartDate ? format(tempStartDate, "dd/MM/yyyy") : "Pilih"}
+                </Button>
+                <Button
+                  variant={!isSelectingStart ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setIsSelectingStart(false)}
+                  className="flex-1"
+                >
+                  Selesai: {tempEndDate ? format(tempEndDate, "dd/MM/yyyy") : "Pilih"}
+                </Button>
+              </div>
+              <div className="text-xs text-muted-foreground text-center">
+                {isSelectingStart ? "👆 Pilih tanggal mulai" : "👆 Pilih tanggal selesai"}
+              </div>
+            </div>
+
             <CalendarComponent
-              initialFocus
-              mode="range"
-              defaultMonth={filters.dateRange?.from}
-              selected={filters.dateRange}
-              onSelect={setDateRange}
+              mode="single"
+              month={month}
+              onMonthChange={setMonth}
+              selected={isSelectingStart ? tempStartDate : tempEndDate}
+              onSelect={handleDateSelect}
               numberOfMonths={2}
               locale={id}
               className="pointer-events-auto"
             />
+            
+            <div className="p-3 border-t flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleReset}
+                className="flex-1"
+              >
+                Reset
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleApplyDates}
+                disabled={!tempStartDate || !tempEndDate}
+                className="flex-1 bg-primary hover:bg-primary-dark"
+              >
+                Terapkan
+              </Button>
+            </div>
           </PopoverContent>
         </Popover>
       </div>

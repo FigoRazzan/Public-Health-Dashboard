@@ -22,6 +22,16 @@ interface AgeChartProps {
   onRegionFilterChange?: (regions: string[]) => void;
 }
 
+const REGION_COLORS: Record<string, string> = {
+  'all': 'hsl(var(--primary))',
+  'AFR': 'hsl(25, 45%, 35%)',       // Dark Brown for Africa
+  'AMR': 'hsl(var(--success))',     // Green for Americas
+  'EMR': 'hsl(var(--warning))',     // Orange for Eastern Mediterranean
+  'EUR': 'hsl(var(--primary))',     // Blue for Europe
+  'SEAR': 'hsl(328, 100%, 54%)',    // Fuschia for South-East Asia
+  'WPR': 'hsl(300, 47%, 75%)',      // Plum for Western Pacific
+};
+
 export function AgeChart({ data }: AgeChartProps) {
   const { filters } = useFilters();
 
@@ -38,6 +48,8 @@ export function AgeChart({ data }: AgeChartProps) {
   const getFilterText = () => {
     return regionLabels[filters.region] || 'Semua Wilayah';
   };
+
+  const barColor = REGION_COLORS[filters.region] || REGION_COLORS['all'];
 
   return (
     <Card>
@@ -67,7 +79,7 @@ export function AgeChart({ data }: AgeChartProps) {
               }}
             />
             <Legend />
-            <Bar dataKey="cases" fill="hsl(var(--primary))" name="Jumlah Kasus" radius={[8, 8, 0, 0]} />
+            <Bar dataKey="cases" fill={barColor} name="Jumlah Kasus" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>

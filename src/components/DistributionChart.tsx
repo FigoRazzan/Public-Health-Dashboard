@@ -14,13 +14,22 @@ interface DistributionChartProps {
 }
 
 const COLORS = [
-  "hsl(var(--primary))",
-  "hsl(var(--success))",
-  "hsl(var(--warning))",
-  "hsl(var(--danger))",
-  "hsl(var(--accent))",
-  "hsl(210, 60%, 70%)",
+  "hsl(var(--primary))",     // Blue for Europe
+  "hsl(var(--success))",     // Green for Americas
+  "hsl(var(--warning))",     // Orange for Eastern Mediterranean
+  "hsl(var(--danger))",      // Red for Africa
+  "hsl(var(--accent))",      // Accent for South-East Asia
+  "hsl(145, 65%, 45%)",      // Green for Western Pacific
 ];
+
+const REGION_COLORS: Record<string, string> = {
+  'Europe': 'hsl(var(--primary))',
+  'Americas': 'hsl(var(--success))',
+  'Eastern Mediterranean': 'hsl(var(--warning))',
+  'Africa': 'hsl(25, 45%, 35%)',
+  'South-East Asia': 'hsl(328, 100%, 54%)',
+  'Western Pacific': 'hsl(300, 47%, 75%)',
+};
 
 export function DistributionChart({ data }: DistributionChartProps) {
   const { filters } = useFilters();
@@ -64,7 +73,7 @@ export function DistributionChart({ data }: DistributionChartProps) {
               label={(entry) => entry.name}
             >
               {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <Cell key={`cell-${index}`} fill={REGION_COLORS[entry.name] || COLORS[index % COLORS.length]} />
               ))}
             </Pie>
             <Tooltip
