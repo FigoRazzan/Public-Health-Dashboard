@@ -9,7 +9,7 @@
 
 **Real-time COVID-19 Global Data Monitoring & Analytics Platform**
 
-[Live Demo](https://lovable.dev/projects/ff955f44-e87c-4019-aad3-34d1182f0561) • [Report Bug](https://github.com/FigoRazzan/Public-Health-Dashboard/issues) • [Request Feature](https://github.com/FigoRazzan/Public-Health-Dashboard/issues)
+[Report Bug](https://github.com/FigoRazzan/Public-Health-Dashboard/issues) • [Request Feature](https://github.com/FigoRazzan/Public-Health-Dashboard/issues)
 
 </div>
 
@@ -51,13 +51,13 @@ Proyek ini dikembangkan sebagai bagian dari mata kuliah **FB-499 INFORMATIKA TER
 
 Proyek ini dikembangkan oleh mahasiswa Informatika ITENAS:
 
-| NIM | Nama | Role |
+| NRP | Nama | Role |
 |-----|------|------|
-| 152022044 | Dimas Bratakusumah | Developer |
-| 152022064 | Muhammad Figo Razzan Fadillah | Lead Developer |
-| 152022150 | Dian Raisa | Developer |
-| 152022217 | Mochamad Ramdhan | Developer |
-| 152022250 | R Jayani Maulana | Developer |
+| 15-2022-044 | Dimas Bratakusumah | Project Lead / Health Informatics Analyst & Ethics & Governance Representative |
+| 15-2022-064 | Muhammad Figo Razzan Fadillah | Application Developer / Data Engineer |
+| 15-2022-150 | Dian Raisa Gumilar | Data Analyst / Visualization Specialist |
+| 15-2022-217 | Mochamad Ramdhan | System Architect / Developer |
+| 15-2022-250 | R Jayani Maulana S | Public Health Data Specialist |
 
 **Mata Kuliah:** FB-499 INFORMATIKA TERAPAN BB  
 **Institusi:** Institut Teknologi Nasional (ITENAS) Bandung  
@@ -268,19 +268,27 @@ const filteredData = useMemo(() => {
 )}
 ```
 
-## 📈 Roadmap
+## 🖼️ Screenshots & Demo
 
-- [x] Basic dashboard dengan KPI cards
-- [x] CSV data integration
-- [x] Interactive filtering system
-- [x] Multi-chart visualization
-- [x] IndexedDB caching
-- [x] Responsive design
-- [ ] Export data ke Excel/PDF
-- [ ] Advanced analytics (forecasting)
-- [ ] Dark mode toggle
-- [ ] Multi-language support
-- [ ] API integration untuk real-time update
+### Dashboard Utama
+![Dashboard Overview](public/Screenshots/DashboardUtama.png)
+*Dashboard dengan KPI cards, trend chart, dan real-time statistics*
+
+### Tren Kasus Harian (Interactive)
+![Trend Chart Animation](public/Screenshots/LineChart.gif)
+*Visualisasi interaktif tren kasus harian per wilayah dengan multi-region comparison*
+
+### Data Explorer
+![Data Explorer](public/Screenshots/DataExplorer.png)
+*Eksplorasi data dengan filtering, sorting, dan pagination*
+
+### Visualisasi Interaktif
+![Interactive Charts](public/Screenshots/Chart.png)
+*Multi-region visualization dengan pie chart dan bar chart*
+
+### Light Mode
+![Light Mode](public/Screenshots/LightMode.png)
+*Tema terang dengan tampilan yang bersih dan modern*
 
 ## 🤝 Kontribusi
 
@@ -299,8 +307,6 @@ Project ini menggunakan MIT License. Lihat file `LICENSE` untuk detail.
 ## 📞 Kontak
 
 **Repository:** [github.com/FigoRazzan/Public-Health-Dashboard](https://github.com/FigoRazzan/Public-Health-Dashboard)
-
-**Lead Developer:** Muhammad Figo Razzan Fadillah - 152022064
 
 **Institusi:** Institut Teknologi Nasional (ITENAS) Bandung
 
