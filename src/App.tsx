@@ -6,7 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Index from "./pages/Index";
 import DataExplorer from "./pages/DataExplorer";
-import Laporan from "./pages/Laporan";
 import SumberData from "./pages/SumberData";
 import Pengaturan from "./pages/Pengaturan";
 import NotFound from "./pages/NotFound";
@@ -23,7 +22,6 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/data" element={<DataExplorer />} />
-            <Route path="/laporan" element={<Laporan />} />
             <Route path="/sumber" element={<SumberData />} />
             <Route path="/pengaturan" element={<Pengaturan />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

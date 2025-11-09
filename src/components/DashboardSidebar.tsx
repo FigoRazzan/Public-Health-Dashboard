@@ -1,4 +1,4 @@
-import { LayoutDashboard, Database, FileText, HardDrive, Settings } from "lucide-react";
+import { LayoutDashboard, Database, HardDrive, Settings } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
@@ -16,7 +16,6 @@ import {
 const menuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Data Explorer", url: "/data", icon: Database },
-  { title: "Laporan", url: "/laporan", icon: FileText },
   { title: "Sumber Data", url: "/sumber", icon: HardDrive },
   { title: "Pengaturan", url: "/pengaturan", icon: Settings },
 ];
