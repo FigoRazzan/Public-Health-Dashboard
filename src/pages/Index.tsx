@@ -29,10 +29,21 @@ const DashboardContent = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Memuat data...</p>
+      <div className="flex items-center justify-center min-h-screen bg-background">
+        <div className="text-center space-y-4">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Activity className="h-6 w-6 text-primary animate-pulse" />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-foreground">Memuat Dashboard COVID-19</p>
+            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="animate-pulse">●</div>
+              <span>Sedang memproses data global...</span>
+            </div>
+          </div>
         </div>
       </div>
     );

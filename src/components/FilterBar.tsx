@@ -74,9 +74,18 @@ export function FilterBar() {
   };
 
   const handleReset = () => {
-    setTempStartDate(undefined);
-    setTempEndDate(undefined);
+    // Reset to default date range (2020-01-01 to today)
+    const defaultStart = new Date(2020, 0, 1);
+    const defaultEnd = new Date();
+    
+    setTempStartDate(defaultStart);
+    setTempEndDate(defaultEnd);
     setIsSelectingStart(true);
+    setMonth(defaultStart);
+    
+    // Apply the default dates immediately
+    setDateRange({ from: defaultStart, to: defaultEnd });
+    setIsOpen(false);
   };
 
   return (

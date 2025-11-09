@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Papa from 'papaparse';
 import { FilterState } from '@/contexts/FilterContext';
+import { getCachedData, setCachedData } from '@/lib/indexedDB';
 
 export interface CovidDataRow {
   Date_reported: string;
@@ -65,24 +66,50 @@ export function useCovidData(filters?: FilterState) {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        
+        // Try to get cached data first
+        const cached = await getCachedData();
+        if (cached) {
+          console.log(`✅ Loaded ${cached.data.length} rows from cache (INSTANT)`);
+          setData(cached.data);
+          setLoading(false);
+          return;
+        }
+
+        // If no cache, fetch from CSV
+        console.log('📥 Fetching CSV from server...');
+        const startTime = performance.now();
         const response = await fetch('/WHO-COVID-19-global-daily-data.csv');
         const csvText = await response.text();
+        console.log(`📦 CSV downloaded in ${((performance.now() - startTime) / 1000).toFixed(2)}s`);
 
+        console.log('🔄 Parsing CSV data...');
+        const parseStart = performance.now();
         Papa.parse(csvText, {
           header: true,
           dynamicTyping: true,
           skipEmptyLines: true,
-          complete: (results) => {
+          complete: async (results) => {
             const parsedData = results.data as CovidDataRow[];
+            console.log(`✅ Parsed ${parsedData.length} rows in ${((performance.now() - parseStart) / 1000).toFixed(2)}s`);
             setData(parsedData);
+            
+            // Cache the data for next time
+            console.log('💾 Caching data to IndexedDB...');
+            await setCachedData(parsedData);
+            console.log('✅ Data cached! Next load will be instant ⚡');
+            
             setLoading(false);
           },
           error: (error) => {
+            console.error('❌ Parse error:', error);
             setError(error.message);
             setLoading(false);
           },
         });
       } catch (err) {
+        console.error('❌ Fetch error:', err);
         setError('Failed to load CSV file');
         setLoading(false);
       }
@@ -91,8 +118,8 @@ export function useCovidData(filters?: FilterState) {
     fetchData();
   }, []);
 
-  // Helper function to filter data based on filters
-  const getFilteredData = () => {
+  // Memoize filtered data to avoid re-filtering on every render
+  const filteredData = useMemo(() => {
     if (!filters) return data;
 
     return data.filter(row => {
@@ -113,7 +140,10 @@ export function useCovidData(filters?: FilterState) {
 
       return true;
     });
-  };
+  }, [data, filters?.dateRange?.from, filters?.dateRange?.to, filters?.region]);
+
+  // Helper function to get filtered data
+  const getFilteredData = () => filteredData;
 
   // Calculate statistics
   const getStats = (): CovidStats => {
