@@ -204,13 +204,9 @@ export function useCovidData(filters?: FilterState) {
     return result;
   }, [data, aggregatedData, filters?.dateRange?.from, filters?.dateRange?.to, filters?.region]);
 
-  // Helper function to get filtered data
-  const getFilteredData = () => filteredData;
-
   // Calculate statistics with memoization
   const getStats = useMemo((): CovidStats => {
     console.time('⚡ Stats calculation');
-    const filteredData = getFilteredData();
     
     if (filteredData.length === 0) {
       console.timeEnd('⚡ Stats calculation');
@@ -321,7 +317,7 @@ export function useCovidData(filters?: FilterState) {
         }
       }
       return true;
-    }) : getFilteredData();
+    }) : filteredData;
     
     if (baseData.length === 0) return [];
 
@@ -478,7 +474,6 @@ export function useCovidData(filters?: FilterState) {
 
   // Get region distribution with optional region filter and time range
   const getRegionData = (selectedRegions?: string[]): RegionData[] => {
-    const filteredData = getFilteredData();
     if (filteredData.length === 0) return [];
 
     const timeRange = filters?.chartTimeRange || '6m';
@@ -547,7 +542,7 @@ export function useCovidData(filters?: FilterState) {
         }
       }
       return true;
-    }) : getFilteredData();
+    }) : filteredData;
     
     if (baseData.length === 0) return [];
 
@@ -654,7 +649,6 @@ export function useCovidData(filters?: FilterState) {
 
   // Get latest table data with filters
   const getTableData = (limit: number = 10) => {
-    const filteredData = getFilteredData();
     if (filteredData.length === 0) return [];
 
     const latestDate = filteredData.reduce((max, row) => {
