@@ -55,6 +55,21 @@ const REGION_NAMES: Record<string, string> = {
   'WPR': 'Pasifik Barat',
 };
 
+// Format large numbers to K (thousands) or M (millions)
+const formatYAxis = (value: number) => {
+  if (value >= 1000000) {
+    return `${(value / 1000000).toFixed(1)}M`;
+  } else if (value >= 1000) {
+    return `${(value / 1000).toFixed(0)}K`;
+  }
+  return value.toString();
+};
+
+// Format numbers with thousand separator for tooltip
+const formatTooltipValue = (value: number) => {
+  return value.toLocaleString('id-ID');
+};
+
 export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
   const { filters, setChartTimeRange } = useFilters();
 
@@ -108,13 +123,18 @@ export function TrendChart({ data, onTimeRangeChange }: TrendChartProps) {
               stroke="hsl(var(--muted-foreground))"
               fontSize={12}
             />
-            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+            <YAxis 
+              stroke="hsl(var(--muted-foreground))" 
+              fontSize={12}
+              tickFormatter={formatYAxis}
+            />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
                 borderRadius: "var(--radius)",
               }}
+              formatter={(value: number) => formatTooltipValue(value)}
             />
             <Legend />
             {showMultiRegion ? (
