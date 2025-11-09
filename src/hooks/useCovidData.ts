@@ -62,6 +62,7 @@ export function useCovidData(filters?: FilterState) {
   const [data, setData] = useState<CovidDataRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [aggregatedData, setAggregatedData] = useState<Map<string, CovidDataRow[]>>(new Map());
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +73,24 @@ export function useCovidData(filters?: FilterState) {
         const cached = await getCachedData();
         if (cached) {
           console.log(`✅ Loaded ${cached.data.length} rows from cache (INSTANT)`);
-          setData(cached.data);
+          const parsedData = cached.data as CovidDataRow[];
+          setData(parsedData);
+          
+          // Pre-aggregate data for faster filtering
+          console.log('🔄 Pre-aggregating data for faster filtering...');
+          const startAggregate = performance.now();
+          const aggregated = new Map<string, CovidDataRow[]>();
+          
+          parsedData.forEach(row => {
+            const key = `${row.Date_reported}_${row.WHO_region}`;
+            if (!aggregated.has(key)) {
+              aggregated.set(key, []);
+            }
+            aggregated.get(key)!.push(row);
+          });
+          
+          setAggregatedData(aggregated);
+          console.log(`✅ Aggregated in ${((performance.now() - startAggregate) / 1000).toFixed(2)}s`);
           setLoading(false);
           return;
         }
@@ -94,6 +112,22 @@ export function useCovidData(filters?: FilterState) {
             const parsedData = results.data as CovidDataRow[];
             console.log(`✅ Parsed ${parsedData.length} rows in ${((performance.now() - parseStart) / 1000).toFixed(2)}s`);
             setData(parsedData);
+            
+            // Pre-aggregate data
+            console.log('🔄 Pre-aggregating data...');
+            const startAggregate = performance.now();
+            const aggregated = new Map<string, CovidDataRow[]>();
+            
+            parsedData.forEach(row => {
+              const key = `${row.Date_reported}_${row.WHO_region}`;
+              if (!aggregated.has(key)) {
+                aggregated.set(key, []);
+              }
+              aggregated.get(key)!.push(row);
+            });
+            
+            setAggregatedData(aggregated);
+            console.log(`✅ Aggregated in ${((performance.now() - startAggregate) / 1000).toFixed(2)}s`);
             
             // Cache the data for next time
             console.log('💾 Caching data to IndexedDB...');
@@ -118,11 +152,41 @@ export function useCovidData(filters?: FilterState) {
     fetchData();
   }, []);
 
-  // Memoize filtered data to avoid re-filtering on every render
+  // Optimized filtered data with early termination for large datasets
   const filteredData = useMemo(() => {
     if (!filters) return data;
-
-    return data.filter(row => {
+    
+    console.time('⚡ Filtering data');
+    
+    // If filtering by region, use aggregated data for faster lookup
+    if (filters.region !== 'all' && aggregatedData.size > 0) {
+      const result: CovidDataRow[] = [];
+      const fromDate = filters.dateRange?.from ? new Date(filters.dateRange.from) : null;
+      const toDate = filters.dateRange?.to ? new Date(filters.dateRange.to) : null;
+      
+      // Only iterate through relevant keys
+      for (const [key, rows] of aggregatedData.entries()) {
+        const [dateStr, region] = key.split('_');
+        
+        // Quick region check
+        if (region !== filters.region) continue;
+        
+        // Quick date check
+        if (fromDate || toDate) {
+          const rowDate = new Date(dateStr);
+          if (fromDate && rowDate < fromDate) continue;
+          if (toDate && rowDate > toDate) continue;
+        }
+        
+        result.push(...rows);
+      }
+      
+      console.timeEnd('⚡ Filtering data');
+      return result;
+    }
+    
+    // Standard filtering for 'all' regions
+    const result = data.filter(row => {
       // Filter by date range
       if (filters.dateRange?.from && filters.dateRange?.to) {
         const rowDate = new Date(row.Date_reported);
@@ -133,23 +197,23 @@ export function useCovidData(filters?: FilterState) {
         }
       }
 
-      // Filter by region
-      if (filters.region !== 'all' && row.WHO_region !== filters.region) {
-        return false;
-      }
-
       return true;
     });
-  }, [data, filters?.dateRange?.from, filters?.dateRange?.to, filters?.region]);
+    
+    console.timeEnd('⚡ Filtering data');
+    return result;
+  }, [data, aggregatedData, filters?.dateRange?.from, filters?.dateRange?.to, filters?.region]);
 
   // Helper function to get filtered data
   const getFilteredData = () => filteredData;
 
-  // Calculate statistics
-  const getStats = (): CovidStats => {
+  // Calculate statistics with memoization
+  const getStats = useMemo((): CovidStats => {
+    console.time('⚡ Stats calculation');
     const filteredData = getFilteredData();
     
     if (filteredData.length === 0) {
+      console.timeEnd('⚡ Stats calculation');
       return {
         totalCases: 0,
         totalDeaths: 0,
@@ -160,15 +224,35 @@ export function useCovidData(filters?: FilterState) {
       };
     }
 
-    // Get latest data (most recent date in filtered data)
+    // Get latest date once
     const latestDate = filteredData.reduce((max, row) => {
       return row.Date_reported > max ? row.Date_reported : max;
     }, '');
 
-    const latestData = filteredData.filter(row => row.Date_reported === latestDate);
+    // Group by country and sum cumulative cases from latest date only
+    const countryMap = new Map<string, { cases: number; deaths: number }>();
     
-    const totalCases = latestData.reduce((sum, row) => sum + (row.Cumulative_cases || 0), 0);
-    const totalDeaths = latestData.reduce((sum, row) => sum + (row.Cumulative_deaths || 0), 0);
+    for (const row of filteredData) {
+      if (row.Date_reported !== latestDate) continue;
+      
+      const country = row.Country_code || row.Country || 'Unknown';
+      const existing = countryMap.get(country);
+      
+      if (!existing || (row.Cumulative_cases || 0) > existing.cases) {
+        countryMap.set(country, {
+          cases: row.Cumulative_cases || 0,
+          deaths: row.Cumulative_deaths || 0,
+        });
+      }
+    }
+    
+    // Sum from unique countries
+    let totalCases = 0;
+    let totalDeaths = 0;
+    for (const data of countryMap.values()) {
+      totalCases += data.cases;
+      totalDeaths += data.deaths;
+    }
     
     // Estimate recovered (approximately 95% of cases minus deaths)
     const totalRecovered = Math.round(totalCases * 0.95 - totalDeaths);
@@ -176,30 +260,41 @@ export function useCovidData(filters?: FilterState) {
     // Calculate CFR (Case Fatality Rate)
     const cfr = totalCases > 0 ? (totalDeaths / totalCases) * 100 : 0;
 
-    // Calculate trend (compare last 7 days with previous 7 days)
-    const dates = [...new Set(filteredData.map(row => row.Date_reported))].sort().reverse();
-    const last7Days = dates.slice(0, 7);
-    const prev7Days = dates.slice(7, 14);
+    // Calculate trend efficiently with single pass
+    const dateMap = new Map<string, { cases: number; deaths: number }>();
+    for (const row of filteredData) {
+      const existing = dateMap.get(row.Date_reported) || { cases: 0, deaths: 0 };
+      existing.cases += row.New_cases || 0;
+      existing.deaths += row.New_deaths || 0;
+      dateMap.set(row.Date_reported, existing);
+    }
+    
+    const sortedDates = Array.from(dateMap.keys()).sort().reverse();
+    const last7Days = sortedDates.slice(0, 7);
+    const prev7Days = sortedDates.slice(7, 14);
 
-    const last7Cases = filteredData
-      .filter(row => last7Days.includes(row.Date_reported))
-      .reduce((sum, row) => sum + (row.New_cases || 0), 0);
-
-    const prev7Cases = filteredData
-      .filter(row => prev7Days.includes(row.Date_reported))
-      .reduce((sum, row) => sum + (row.New_cases || 0), 0);
-
-    const last7Deaths = filteredData
-      .filter(row => last7Days.includes(row.Date_reported))
-      .reduce((sum, row) => sum + (row.New_deaths || 0), 0);
-
-    const prev7Deaths = filteredData
-      .filter(row => prev7Days.includes(row.Date_reported))
-      .reduce((sum, row) => sum + (row.New_deaths || 0), 0);
+    let last7Cases = 0, prev7Cases = 0, last7Deaths = 0, prev7Deaths = 0;
+    
+    for (const date of last7Days) {
+      const data = dateMap.get(date);
+      if (data) {
+        last7Cases += data.cases;
+        last7Deaths += data.deaths;
+      }
+    }
+    
+    for (const date of prev7Days) {
+      const data = dateMap.get(date);
+      if (data) {
+        prev7Cases += data.cases;
+        prev7Deaths += data.deaths;
+      }
+    }
 
     const casesTrend = prev7Cases > 0 ? ((last7Cases - prev7Cases) / prev7Cases) * 100 : 0;
     const deathsTrend = prev7Deaths > 0 ? ((last7Deaths - prev7Deaths) / prev7Deaths) * 100 : 0;
 
+    console.timeEnd('⚡ Stats calculation');
     return {
       totalCases,
       totalDeaths,
@@ -208,7 +303,7 @@ export function useCovidData(filters?: FilterState) {
       casesTrend,
       deathsTrend,
     };
-  };
+  }, [filteredData]);
 
   // Get trend data based on time range (with per-region breakdown)
   const getTrendData = (timeRange: string = '6m'): TrendData[] => {
@@ -586,7 +681,7 @@ export function useCovidData(filters?: FilterState) {
     data,
     loading,
     error,
-    getStats,
+    stats: getStats,
     getTrendData,
     getRegionData,
     getAgeData,

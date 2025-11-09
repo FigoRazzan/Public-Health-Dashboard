@@ -13,9 +13,8 @@ import { FilterProvider, useFilters } from "@/contexts/FilterContext";
 
 const DashboardContent = () => {
   const { filters } = useFilters();
-  const { loading, error, getStats, getTrendData, getRegionData, getAgeData, getTableData } = useCovidData(filters);
+  const { loading, error, stats, getTrendData, getRegionData, getAgeData, getTableData } = useCovidData(filters);
   
-  const stats = getStats();
   const trendData = getTrendData(filters.chartTimeRange);
   
   // Use main region filter for both charts
@@ -29,23 +28,134 @@ const DashboardContent = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <div className="text-center space-y-4">
-          <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-primary border-t-transparent mx-auto"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Activity className="h-6 w-6 text-primary animate-pulse" />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <p className="text-lg font-semibold text-foreground">Memuat Dashboard COVID-19</p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <div className="animate-pulse">●</div>
-              <span>Sedang memproses data global...</span>
-            </div>
+      <SidebarProvider>
+        <div className="flex min-h-screen w-full">
+          <DashboardSidebar />
+          <div className="flex-1 flex flex-col">
+            <DashboardHeader />
+            <main className="flex-1 p-6 space-y-6">
+              {/* Header Skeleton */}
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <div className="h-8 w-80 bg-muted animate-pulse rounded"></div>
+                  <div className="h-4 w-64 bg-muted animate-pulse rounded"></div>
+                </div>
+                <SidebarTrigger />
+              </div>
+
+              {/* Filter Bar Skeleton */}
+              <div className="bg-card border rounded-lg p-4">
+                <div className="flex flex-wrap gap-4">
+                  <div className="h-10 w-48 bg-muted animate-pulse rounded"></div>
+                  <div className="h-10 w-48 bg-muted animate-pulse rounded"></div>
+                  <div className="h-10 w-32 bg-muted animate-pulse rounded"></div>
+                </div>
+              </div>
+
+              {/* KPI Cards Skeleton */}
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="bg-card border rounded-lg p-6 space-y-3 animate-pulse">
+                    <div className="flex items-center justify-between">
+                      <div className="h-4 w-32 bg-muted rounded"></div>
+                      <div className="h-8 w-8 bg-muted rounded"></div>
+                    </div>
+                    <div className="h-8 w-28 bg-muted rounded"></div>
+                    <div className="h-4 w-20 bg-muted rounded"></div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Trend Chart Skeleton */}
+              <div className="bg-card border rounded-lg p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="h-6 w-64 bg-muted animate-pulse rounded mb-2"></div>
+                    <div className="h-4 w-48 bg-muted animate-pulse rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="h-8 w-12 bg-muted animate-pulse rounded"></div>
+                    ))}
+                  </div>
+                </div>
+                <div className="h-80 bg-muted animate-pulse rounded flex items-end justify-around p-4 gap-1">
+                  {/* Animated bars simulating chart loading */}
+                  {[...Array(20)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="bg-primary/20 rounded-t animate-pulse w-full"
+                      style={{
+                        height: `${Math.random() * 80 + 20}%`,
+                        animationDelay: `${i * 0.1}s`,
+                      }}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Distribution & Age Charts Skeleton */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {[1, 2].map((i) => (
+                  <div key={i} className="bg-card border rounded-lg p-6 space-y-4">
+                    <div>
+                      <div className="h-6 w-56 bg-muted animate-pulse rounded mb-2"></div>
+                      <div className="h-4 w-40 bg-muted animate-pulse rounded"></div>
+                    </div>
+                    <div className="h-80 bg-muted animate-pulse rounded flex items-center justify-center">
+                      {i === 1 ? (
+                        // Pie chart simulation
+                        <div className="relative w-48 h-48 rounded-full border-8 border-primary/20 animate-spin" style={{ animationDuration: '3s' }}>
+                          <div className="absolute inset-0 rounded-full border-t-8 border-primary/40"></div>
+                        </div>
+                      ) : (
+                        // Bar chart simulation
+                        <div className="flex items-end justify-around h-64 w-full gap-2 px-8">
+                          {[...Array(6)].map((_, idx) => (
+                            <div
+                              key={idx}
+                              className="bg-primary/30 rounded-t w-full animate-pulse"
+                              style={{
+                                height: `${Math.random() * 80 + 20}%`,
+                                animationDelay: `${idx * 0.15}s`,
+                              }}
+                            ></div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Data Table Skeleton */}
+              <div className="bg-card border rounded-lg p-6 space-y-4">
+                <div>
+                  <div className="h-6 w-48 bg-muted animate-pulse rounded mb-2"></div>
+                  <div className="h-4 w-64 bg-muted animate-pulse rounded"></div>
+                </div>
+                <div className="space-y-2">
+                  {[...Array(10)].map((_, i) => (
+                    <div key={i} className="flex gap-4 p-3 border-b animate-pulse">
+                      <div className="h-5 w-8 bg-muted rounded"></div>
+                      <div className="h-5 w-32 bg-muted rounded"></div>
+                      <div className="h-5 w-24 bg-muted rounded"></div>
+                      <div className="h-5 w-24 bg-muted rounded"></div>
+                      <div className="h-5 w-20 bg-muted rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Loading Indicator Overlay */}
+              <div className="fixed bottom-6 right-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-pulse">
+                <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground border-t-transparent"></div>
+                <span className="font-medium">Memuat data COVID-19...</span>
+              </div>
+            </main>
           </div>
         </div>
-      </div>
+      </SidebarProvider>
     );
   }
 
@@ -66,7 +176,7 @@ const DashboardContent = () => {
         <DashboardSidebar />
         <div className="flex-1 flex flex-col">
           <DashboardHeader />
-          <main className="flex-1 p-6 space-y-6">
+          <main className="flex-1 p-6 space-y-6 animate-in fade-in duration-500">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-foreground">Ringkasan Eksekutif Wabah</h2>
@@ -79,7 +189,7 @@ const DashboardContent = () => {
 
             <FilterBar />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
               <KPICard
                 title="Total Kasus Terkonfirmasi"
                 value={stats.totalCases.toLocaleString('id-ID')}
@@ -116,14 +226,18 @@ const DashboardContent = () => {
               />
             </div>
 
-            <TrendChart data={trendData} />
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-200">
+              <TrendChart data={trendData} />
+            </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-300">
               <DistributionChart data={regionData} />
               <AgeChart data={ageData} />
             </div>
 
-            <DataTable data={tableData} />
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 delay-[400ms]">
+              <DataTable data={tableData} />
+            </div>
           </main>
         </div>
       </div>
