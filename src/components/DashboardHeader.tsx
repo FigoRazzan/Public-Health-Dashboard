@@ -1,4 +1,4 @@
-import { Bell, User } from "lucide-react";
+import { Bell, User, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -9,8 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export function DashboardHeader() {
+  const { theme, toggleTheme } = useTheme();
   const currentDate = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
     year: "numeric",
@@ -35,6 +37,20 @@ export function DashboardHeader() {
             <span className="font-medium">Last Updated:</span>
             <span>{currentDate}</span>
           </div>
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleTheme}
+            className="relative"
+            title={theme === "dark" ? "Mode Terang" : "Mode Gelap"}
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5 text-yellow-500" />
+            ) : (
+              <Moon className="h-5 w-5 text-primary" />
+            )}
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

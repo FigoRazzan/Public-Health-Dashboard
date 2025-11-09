@@ -7,9 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, Bell, Shield, Palette } from "lucide-react";
+import { User, Bell, Shield, Palette, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Pengaturan() {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -165,13 +169,26 @@ export default function Pengaturan() {
                     </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Mode Gelap</p>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            {isDark ? (
+                              <Moon className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Sun className="h-4 w-4 text-primary" />
+                            )}
+                            <p className="font-medium">Mode Gelap</p>
+                          </div>
                           <p className="text-sm text-muted-foreground">
                             Aktifkan tema gelap untuk mengurangi kelelahan mata
                           </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Status: <span className="font-medium">{isDark ? "Mode Gelap Aktif" : "Mode Terang Aktif"}</span>
+                          </p>
                         </div>
-                        <Switch />
+                        <Switch 
+                          checked={isDark}
+                          onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                        />
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
