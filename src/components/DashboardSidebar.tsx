@@ -27,9 +27,11 @@ export function DashboardSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <LayoutDashboard className="h-6 w-6" />
-          </div>
+          <img 
+            src="/IconLogoWeb.png" 
+            alt="Health Monitor Logo" 
+            className="h-10 w-10 object-contain"
+          />
           {open && (
             <div className="flex flex-col">
               <span className="text-sm font-semibold">Health Monitor</span>
