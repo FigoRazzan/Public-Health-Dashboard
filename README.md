@@ -5,7 +5,6 @@
 ![Dashboard Preview](https://img.shields.io/badge/Status-Active-success)
 ![React](https://img.shields.io/badge/React-18.3.1-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.5.3-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
 
 **Real-time COVID-19 Global Data Monitoring & Analytics Platform**
 
@@ -299,10 +298,6 @@ Kontribusi sangat diterima! Untuk kontribusi major:
 3. Commit changes (`git commit -m 'Add AmazingFeature'`)
 4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open Pull Request
-
-## 📝 License
-
-Project ini menggunakan MIT License. Lihat file `LICENSE` untuk detail.
 
 ## 📞 Kontak
 
