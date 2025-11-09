@@ -1,4 +1,4 @@
-import { Bell, User, Moon, Sun } from "lucide-react";
+import { Bell, User, Moon, Sun, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export function DashboardHeader() {
@@ -24,11 +25,14 @@ export function DashboardHeader() {
     <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
       <div className="flex h-16 items-center justify-between px-6">
         <div className="flex items-center gap-4">
+          <SidebarTrigger className="md:hidden">
+            <Menu className="h-5 w-5" />
+          </SidebarTrigger>
           <div className="flex flex-col">
             <h1 className="text-xl font-bold text-foreground">
               Dashboard Pemantauan Wabah
             </h1>
-            <p className="text-xs text-muted-foreground">COVID-19 / Dengue Monitoring System</p>
+            <p className="text-xs text-muted-foreground hidden sm:block">COVID-19 / Dengue Monitoring System</p>
           </div>
         </div>
 
